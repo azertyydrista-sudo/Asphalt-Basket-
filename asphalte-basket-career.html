@@ -1,0 +1,1814 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ASPHALTE — Le Chemin du Panier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&family=Work+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B1220;
+    --court:#141F38;
+    --panel:#182647;
+    --panel-2:#1E2F57;
+    --line: rgba(242,167,59,0.14);
+    --amber:#F2A73B;
+    --amber-dim:#8A6222;
+    --wood:#C97B3D;
+    --chalk:#F5F1E8;
+    --chalk-dim:#9AA6C4;
+    --good:#4ADE80;
+    --bad:#EF4444;
+    --gem:#7DD3FC;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(242,167,59,0.10), transparent 55%),
+      repeating-linear-gradient(180deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px),
+      var(--bg);
+    color:var(--chalk);
+    font-family:'Work Sans', sans-serif;
+    min-height:100%;
+    display:flex;
+    justify-content:center;
+  }
+  .display{ font-family:'Anton', sans-serif; letter-spacing:0.5px; }
+  .mono{ font-family:'Space Mono', monospace; }
+
+  #app{
+    width:100%;
+    max-width:480px;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    background:
+      linear-gradient(180deg, rgba(20,31,56,0.6), rgba(11,18,32,0.9)),
+      repeating-linear-gradient(90deg, rgba(201,123,61,0.03) 0px, rgba(201,123,61,0.03) 18px, transparent 18px, transparent 36px);
+    position:relative;
+    box-shadow: 0 0 60px rgba(0,0,0,0.5);
+  }
+
+  /* ---------- SCOREBOARD HEADER ---------- */
+  .scoreboard{
+    background: linear-gradient(180deg, #101A30, #0C1526);
+    border-bottom:3px solid var(--amber-dim);
+    padding:12px 14px 10px;
+    position:sticky; top:0; z-index:50;
+  }
+  .sb-top{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+  }
+  .sb-name{
+    display:flex; flex-direction:column; line-height:1.05; flex:1; min-width:0;
+  }
+  .sb-name .who{ font-size:15px; font-weight:800; color:var(--chalk); }
+  .sb-name .role{ font-size:10px; color:var(--chalk-dim); text-transform:uppercase; letter-spacing:1px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .sb-stats{ display:flex; gap:10px; align-items:center; flex-shrink:0; }
+  .sb-chip{
+    display:flex; align-items:center; gap:5px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:20px; padding:4px 9px;
+    font-size:12px; font-weight:700;
+  }
+  .sb-chip.cash{ color:#F2C879; }
+  .sb-chip.gem{ color:var(--gem); }
+  .sb-chip.streak{ color:#FF9E5E; }
+
+  .sb-bottom{ margin-top:9px; }
+  .lvl-row{ display:flex; align-items:center; gap:8px; margin-bottom:4px;}
+  .lvl-badge{
+    background:var(--amber); color:#231400; font-family:'Anton',sans-serif;
+    font-size:12px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;
+  }
+  .xp-track{ flex:1; height:6px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden;}
+  .xp-fill{ height:100%; background:linear-gradient(90deg,#F2A73B,#FFD48A); transition:width .4s ease; }
+  .en-row{ display:flex; align-items:center; gap:6px; }
+  .en-label{ font-size:10px; color:var(--chalk-dim); text-transform:uppercase; letter-spacing:1px; width:56px; flex-shrink:0;}
+  .en-track{ flex:1; height:8px; border-radius:4px; overflow:hidden; display:flex; gap:2px; background:rgba(255,255,255,0.05);}
+  .en-pip{ flex:1; border-radius:2px; background:rgba(255,255,255,0.08); }
+  .en-pip.on{ background:linear-gradient(180deg,#6BE3B0,#2FBF80); }
+  .en-num{ font-size:11px; color:var(--chalk-dim); width:34px; text-align:right;}
+
+  /* ---------- MAIN CONTENT ---------- */
+  #content{ flex:1; padding:16px 14px 90px; overflow-y:auto; }
+  .screen{ display:none; animation:fadein .25s ease; }
+  .screen.active{ display:block; }
+  @keyframes fadein{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  h1.section-title{
+    font-family:'Anton', sans-serif; font-size:22px; color:var(--chalk); margin:0 0 3px;
+    letter-spacing:0.5px;
+  }
+  .section-sub{ font-size:12px; color:var(--chalk-dim); margin:0 0 16px; }
+
+  .card{
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:14px;
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before{
+    content:""; position:absolute; left:0; top:0; bottom:0; width:4px;
+    background:linear-gradient(180deg,var(--amber),var(--wood));
+  }
+
+  /* player hero card */
+  .hero-card{ text-align:center; padding:22px 16px; }
+  .hero-avatar{
+    width:78px; height:78px; margin:0 auto 10px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #FFDDA6, var(--wood) 65%, #7A431E 100%);
+    display:flex; align-items:center; justify-content:center;
+    font-size:32px; border:3px solid var(--amber);
+    box-shadow:0 0 22px rgba(242,167,59,0.35);
+  }
+  .hero-overall{ font-family:'Anton',sans-serif; font-size:34px; color:var(--amber); margin:4px 0 0;}
+  .hero-overall span{ font-size:12px; color:var(--chalk-dim); font-family:'Work Sans'; display:block; letter-spacing:1px; text-transform:uppercase;}
+
+  .stat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
+  .stat-box{ background:rgba(0,0,0,0.18); border-radius:10px; padding:10px 12px; }
+  .stat-box .lbl{ font-size:10px; color:var(--chalk-dim); text-transform:uppercase; letter-spacing:1px;}
+  .stat-box .val{ font-family:'Anton',sans-serif; font-size:20px; color:var(--chalk); margin-top:2px;}
+  .stat-bar{ height:5px; border-radius:3px; background:rgba(255,255,255,0.08); margin-top:6px; overflow:hidden;}
+  .stat-bar i{ display:block; height:100%; background:linear-gradient(90deg,#F2A73B,#FFD48A); }
+
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    border:none; border-radius:10px; padding:12px 16px;
+    font-family:'Work Sans'; font-weight:700; font-size:14px;
+    cursor:pointer; width:100%;
+    background:linear-gradient(180deg,#F2A73B,#D98A22);
+    color:#26150a;
+    box-shadow:0 3px 0 #8A5A16, 0 6px 14px rgba(242,167,59,0.25);
+    transition:transform .08s ease;
+  }
+  .btn:active{ transform:translateY(2px); box-shadow:0 1px 0 #8A5A16; }
+  .btn.secondary{
+    background:rgba(255,255,255,0.06); color:var(--chalk);
+    box-shadow:0 3px 0 rgba(0,0,0,0.3);
+  }
+  .btn.ghost{
+    background:transparent; border:1px solid rgba(255,255,255,0.15); color:var(--chalk-dim);
+    box-shadow:none;
+  }
+  .btn:disabled{ opacity:0.4; cursor:not-allowed; box-shadow:none; transform:none;}
+  .btn-row{ display:flex; gap:8px; }
+  .btn-row .btn{ flex:1; }
+
+  /* training */
+  .train-choice{
+    display:flex; align-items:center; justify-content:space-between;
+    background:rgba(0,0,0,0.18); border-radius:10px; padding:12px 14px; margin-bottom:9px;
+    cursor:pointer; border:1px solid transparent;
+  }
+  .train-choice:active{ border-color:var(--amber); }
+  .train-choice .tleft{ display:flex; align-items:center; gap:10px; }
+  .train-choice .emoji{ font-size:20px; }
+  .train-choice .tname{ font-weight:700; font-size:14px; }
+  .train-choice .tval{ font-size:11px; color:var(--chalk-dim); }
+  .train-choice .tcost{ font-size:11px; color:var(--good); font-weight:700; }
+
+  .minigame-wrap{ text-align:center; padding:10px 0 4px; }
+  .mg-track{
+    position:relative; height:28px; border-radius:14px; overflow:hidden;
+    background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); margin:14px 0;
+  }
+  .mg-zone{ position:absolute; top:0; bottom:0; background:rgba(74,222,128,0.35); border-left:2px solid var(--good); border-right:2px solid var(--good);}
+  .mg-cursor{ position:absolute; top:-3px; width:4px; height:34px; background:var(--chalk); border-radius:2px; box-shadow:0 0 8px rgba(255,255,255,0.6);}
+
+  /* match */
+  .vs-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .vs-team{ text-align:center; flex:1; }
+  .vs-team .tag{ font-size:10px; color:var(--chalk-dim); text-transform:uppercase; letter-spacing:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 2px;}
+  .vs-team .score{ font-family:'Anton',sans-serif; font-size:38px; }
+  .vs-mid{ font-family:'Anton',sans-serif; color:var(--amber-dim); font-size:16px; padding:0 8px;}
+  .possession-log{
+    background:rgba(0,0,0,0.2); border-radius:10px; padding:10px 12px; margin-bottom:14px;
+    font-size:12.5px; color:var(--chalk-dim); max-height:120px; overflow-y:auto;
+  }
+  .possession-log div{ margin-bottom:4px; }
+  .action-btn{
+    display:block; width:100%; text-align:left; padding:12px 14px; margin-bottom:8px;
+    border-radius:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03);
+    color:var(--chalk); font-weight:600; font-size:13.5px; cursor:pointer;
+  }
+  .action-btn .chance{ float:right; color:var(--amber); font-size:12px; }
+  .action-btn:active{ background:rgba(242,167,59,0.15); }
+
+  /* legends / gacha */
+  .legend-card{
+    display:flex; align-items:center; gap:12px; background:rgba(0,0,0,0.18);
+    border-radius:12px; padding:12px; margin-bottom:9px; border:1px solid rgba(255,255,255,0.05);
+  }
+  .legend-card.rarity-Bronze{ border-left:4px solid #B08D57; }
+  .legend-card.rarity-Argent{ border-left:4px solid #C7D0DA; }
+  .legend-card.rarity-Or{ border-left:4px solid #F2C879; }
+  .legend-card.rarity-Legende{ border-left:4px solid #FF7BD5; box-shadow:0 0 14px rgba(255,123,213,0.15); }
+  .legend-emoji{ font-size:26px; width:40px; text-align:center; }
+  .legend-info .lname{ font-weight:800; font-size:13.5px; }
+  .legend-info .lmeta{ font-size:11px; color:var(--chalk-dim); }
+  .rarity-pill{
+    font-size:9.5px; font-weight:800; padding:2px 7px; border-radius:20px; text-transform:uppercase;
+    letter-spacing:0.5px; margin-left:auto;
+  }
+  .rarity-pill.Bronze{ background:#3A2E1E; color:#D8B78A; }
+  .rarity-pill.Argent{ background:#2C3540; color:#DDE5EC; }
+  .rarity-pill.Or{ background:#4A3A15; color:#F2C879; }
+  .rarity-pill.Legende{ background:#3E1B36; color:#FF9EE0; }
+
+  .gacha-pull-card{
+    text-align:center; padding:26px 16px;
+  }
+  .pull-emoji{ font-size:52px; display:block; margin-bottom:10px; }
+
+  /* season map */
+  .stage-pill{
+    display:inline-block; font-size:10px; text-transform:uppercase; letter-spacing:1px;
+    background:rgba(242,167,59,0.14); color:var(--amber); padding:3px 9px; border-radius:20px; margin-bottom:8px;
+  }
+  .match-row{
+    display:flex; align-items:center; justify-content:space-between;
+    background:rgba(0,0,0,0.18); border-radius:10px; padding:12px 14px; margin-bottom:9px;
+  }
+  .match-row.locked{ opacity:0.4; }
+  .match-row .opp{ font-weight:700; font-size:13.5px; }
+  .match-row .diff{ font-size:11px; color:var(--chalk-dim); }
+  .match-row .status{ font-size:18px; }
+
+  /* missions */
+  .mission-row{
+    display:flex; align-items:center; gap:10px; background:rgba(0,0,0,0.18);
+    border-radius:10px; padding:10px 12px; margin-bottom:8px;
+  }
+  .mission-row .mtext{ flex:1; font-size:12.5px; }
+  .mission-row .mprog{ font-size:11px; color:var(--chalk-dim); }
+  .mission-check{
+    width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,0.06); font-size:13px; flex-shrink:0;
+  }
+  .mission-check.done{ background:var(--good); color:#06210F; }
+
+  /* bottom nav */
+  #navbar{
+    position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+    width:100%; max-width:480px;
+    display:flex; background:#0C1526; border-top:1px solid rgba(255,255,255,0.06);
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+    z-index:60;
+  }
+  .nav-btn{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;
+    background:none; border:none; color:var(--chalk-dim); font-size:9px; padding:6px 1px;
+    cursor:pointer; text-transform:uppercase; letter-spacing:0.3px; font-weight:700;
+    white-space:nowrap;
+  }
+  .nav-btn .ic{ font-size:18px; }
+  .nav-btn.active{ color:var(--amber); }
+
+  /* toast */
+  #toast-wrap{ position:fixed; top:10px; left:50%; transform:translateX(-50%); width:100%; max-width:440px; z-index:200; display:flex; flex-direction:column; align-items:center; gap:6px; pointer-events:none;}
+  .toast{
+    background:#161F38; border:1px solid var(--amber); color:var(--chalk);
+    padding:9px 16px; border-radius:24px; font-size:12.5px; font-weight:700;
+    box-shadow:0 4px 16px rgba(0,0,0,0.4);
+    animation: toastin .25s ease, toastout .3s ease 2.2s forwards;
+  }
+  @keyframes toastin{ from{opacity:0; transform:translateY(-10px);} to{opacity:1; transform:translateY(0);} }
+  @keyframes toastout{ from{opacity:1;} to{opacity:0; transform:translateY(-8px);} }
+
+  /* onboarding */
+  #onboard{
+    position:fixed; inset:0; background:linear-gradient(180deg,#0B1220,#101A30);
+    display:flex; flex-direction:column; align-items:center;
+    padding:24px 24px 40px; z-index:300; max-width:480px; margin:0 auto; left:0; right:0;
+    overflow-y:auto;
+  }
+  #onboard h1{ font-size:34px; text-align:center; margin:8px 0 4px; color:var(--chalk);}
+  #onboard h1 span{ color:var(--amber); }
+  #onboard p.tag{ color:var(--chalk-dim); text-align:center; font-size:13px; margin-bottom:22px;}
+  #onboard .ob-section-title{ width:100%; max-width:320px; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--chalk-dim); margin:14px 0 8px; }
+  .ob-input{
+    width:100%; max-width:320px; padding:13px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.12);
+    background:rgba(255,255,255,0.04); color:var(--chalk); font-size:15px; margin-bottom:4px; font-family:'Work Sans';
+  }
+  .pos-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; max-width:320px; margin-bottom:6px;}
+  .pos-opt{
+    padding:12px 8px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.03);
+    text-align:center; cursor:pointer; font-size:12.5px; font-weight:700; color:var(--chalk-dim);
+  }
+  .pos-opt.sel{ border-color:var(--amber); color:var(--amber); background:rgba(242,167,59,0.08); }
+  .pos-opt .pname{ display:block; font-size:14px; color:var(--chalk); margin-bottom:2px;}
+  #onboard .btn{ max-width:320px; margin-top:10px; }
+  .swatch-row{ display:flex; gap:9px; width:100%; max-width:320px; margin-bottom:6px; flex-wrap:wrap; }
+  .color-swatch{
+    width:34px; height:34px; border-radius:50%; cursor:pointer; border:3px solid transparent;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,0.2);
+  }
+  .color-swatch.sel{ border-color:var(--chalk); transform:scale(1.08); }
+  .emblem-swatch{
+    width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    font-size:20px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); cursor:pointer;
+  }
+  .emblem-swatch.sel{ border-color:var(--amber); background:rgba(242,167,59,0.12); }
+  .club-preview{
+    display:flex; align-items:center; gap:10px; width:100%; max-width:320px;
+    background:rgba(255,255,255,0.03); border-radius:10px; padding:10px 12px; margin-bottom:16px;
+  }
+  .club-preview .cp-emblem{ width:38px; height:38px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:19px; flex-shrink:0; }
+  .club-preview .cp-text{ font-size:12.5px; color:var(--chalk-dim); }
+  .club-preview .cp-text b{ display:block; color:var(--chalk); font-size:14px; }
+
+
+  ::-webkit-scrollbar{ width:0px; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <div id="onboard">
+    <h1 class="display">ASPHALTE<br><span>Le Chemin du Panier</span></h1>
+    <p class="tag">Du playground jusqu'aux sommets de la NBA.<br>Un seul joueur. Une seule légende à écrire.</p>
+    <input id="ob-name" class="ob-input" placeholder="Ton nom de joueur" maxlength="16">
+    <div class="pos-grid" id="ob-positions"></div>
+
+    <div class="ob-section-title">🏀 Ton club</div>
+    <input id="ob-club-name" class="ob-input" placeholder="Nom de ton club" maxlength="20">
+    <div class="swatch-row" id="ob-colors"></div>
+    <div class="swatch-row" id="ob-emblems"></div>
+    <div class="club-preview">
+      <div class="cp-emblem" id="cp-emblem">🏀</div>
+      <div class="cp-text">Aperçu du club<b id="cp-name">Mon Club</b></div>
+    </div>
+
+    <button class="btn" id="ob-start">🏀 Commencer ma carrière</button>
+  </div>
+
+  <div class="scoreboard">
+    <div class="sb-top">
+      <div class="sb-name">
+        <div class="who" id="sb-who">—</div>
+        <div class="role" id="sb-role">—</div>
+      </div>
+      <div class="sb-stats">
+        <div class="sb-chip cash mono">💵 <span id="sb-cash">0</span></div>
+        <div class="sb-chip gem mono">💎 <span id="sb-gem">0</span></div>
+        <div class="sb-chip streak mono">🔥 <span id="sb-streak">0</span></div>
+      </div>
+    </div>
+    <div class="sb-bottom">
+      <div class="lvl-row">
+        <div class="lvl-badge">NIV <span id="sb-level">1</span></div>
+        <div class="xp-track"><div class="xp-fill" id="sb-xpfill" style="width:0%"></div></div>
+      </div>
+      <div class="en-row">
+        <div class="en-label">ÉNERGIE</div>
+        <div class="en-track" id="sb-energy"></div>
+        <div class="en-num mono" id="sb-energy-num">0/0</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="content">
+
+    <!-- HOME -->
+    <div class="screen" id="screen-home">
+      <h1 class="section-title">Vestiaire</h1>
+      <p class="section-sub">Ton profil, tes stats, ta progression.</p>
+
+      <div class="card hero-card">
+        <div class="hero-avatar">🏀</div>
+        <div class="hero-overall" id="home-name">—<span id="home-role">—</span></div>
+        <div class="hero-overall" id="home-overall">0<span>Note Globale</span></div>
+        <div class="stat-grid" id="home-stats"></div>
+      </div>
+
+      <div class="card" id="club-card"></div>
+
+      <div class="card" id="statpoints-card" style="display:none;">
+        <h3 style="margin:0 0 8px; font-size:14px;">✨ Points à distribuer : <span id="sp-count">0</span></h3>
+        <div id="sp-buttons"></div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 10px; font-size:14px;">🎯 Missions du jour</h3>
+        <div id="home-missions"></div>
+      </div>
+    </div>
+
+    <!-- TRAIN -->
+    <div class="screen" id="screen-train">
+      <h1 class="section-title">Entraînement</h1>
+      <p class="section-sub">Chaque séance coûte de l'énergie mais fait progresser tes stats.</p>
+      <div id="train-list"></div>
+    </div>
+
+    <!-- MATCH -->
+    <div class="screen" id="screen-match">
+      <h1 class="section-title">Match</h1>
+      <p class="section-sub" id="match-sub">Choisis ton prochain adversaire dans l'onglet Saison.</p>
+      <div id="match-body"></div>
+    </div>
+
+    <!-- LEGENDS -->
+    <div class="screen" id="screen-legends">
+      <h1 class="section-title">Légendes</h1>
+      <p class="section-sub">Recrute des mentors qui boostent tes stats en permanence.</p>
+      <div id="gacha-card-wrap"></div>
+      <h3 style="font-size:14px; margin:18px 0 10px;">Ta collection (<span id="legend-count">0</span>)</h3>
+      <div id="legend-list"></div>
+    </div>
+
+    <!-- SEASON -->
+    <div class="screen" id="screen-season">
+      <h1 class="section-title">Saison</h1>
+      <p class="section-sub">Ta route vers la NBA.</p>
+      <div id="season-body"></div>
+    </div>
+
+    <!-- RANK -->
+    <div class="screen" id="screen-rank">
+      <h1 class="section-title">Classement Mondial</h1>
+      <p class="section-sub">Affronte les scores de tous les autres joueurs en ligne.</p>
+      <div id="rank-body"></div>
+    </div>
+
+  </div>
+
+  <div id="navbar">
+    <button class="nav-btn active" data-screen="home"><span class="ic">🏠</span>Accueil</button>
+    <button class="nav-btn" data-screen="train"><span class="ic">💪</span>Training</button>
+    <button class="nav-btn" data-screen="match"><span class="ic">🏀</span>Match</button>
+    <button class="nav-btn" data-screen="legends"><span class="ic">🌟</span>Légendes</button>
+    <button class="nav-btn" data-screen="season"><span class="ic">🏆</span>Saison</button>
+    <button class="nav-btn" data-screen="rank"><span class="ic">🌍</span>Monde</button>
+  </div>
+
+  <div id="toast-wrap"></div>
+</div>
+
+<script>
+(function(){
+
+/* ============================= DATA ============================= */
+
+const POSITIONS = [
+  {id:'PG', name:'Meneur', emoji:'🧠', base:{tir:38,phys:42,def:36,iq:52}},
+  {id:'SG', name:'Arrière', emoji:'🎯', base:{tir:52,phys:40,def:36,iq:40}},
+  {id:'SF', name:'Ailier', emoji:'⚡', base:{tir:44,phys:46,def:42,iq:40}},
+  {id:'PF', name:'Ailier Fort', emoji:'💪', base:{tir:38,phys:52,def:46,iq:36}},
+  {id:'C',  name:'Pivot', emoji:'🗼', base:{tir:34,phys:54,def:50,iq:34}},
+];
+
+const STAT_META = {
+  tir:{label:'Tir', emoji:'🎯'},
+  phys:{label:'Physique', emoji:'⚡'},
+  def:{label:'Défense', emoji:'🛡️'},
+  iq:{label:'QI Basket', emoji:'🧠'},
+};
+
+const STAGES = [
+  {name:'Lycée', tag:'Saison 1', oppBase:34},
+  {name:'Université', tag:'Saison 2', oppBase:48},
+  {name:'Draft Combine', tag:'Saison 3', oppBase:58},
+  {name:'NBA — Rookie', tag:'Saison 4', oppBase:68},
+  {name:'NBA — All-Star', tag:'Saison 5', oppBase:80},
+];
+const OPP_NAMES = [
+  ['Les Faucons de Riverside','Central High Sharks','Lycée St-Marc'],
+  ['State Wildcats','Coastal University','Metro Tech Bears'],
+  ['Combine — Groupe A','Combine — Groupe B','Combine Finale'],
+  ['Ironclad City','Northgate Titans','Vipers FC Basket'],
+  ['Solstice All-Stars','Team Meridian','Legendes de l Ouest'],
+];
+
+const LEGEND_POOL = [
+  {id:'l1', name:'Coach Iron Wall', emoji:'🧱', rarity:'Bronze', stat:'def', bonus:2},
+  {id:'l2', name:'Downtown Vega', emoji:'🌠', rarity:'Bronze', stat:'tir', bonus:2},
+  {id:'l3', name:'Flash Nova', emoji:'⚡', rarity:'Bronze', stat:'phys', bonus:2},
+  {id:'l4', name:'Le Cerveau Gris', emoji:'🧠', rarity:'Argent', stat:'iq', bonus:4},
+  {id:'l5', name:'Big Snap', emoji:'🐊', rarity:'Argent', stat:'phys', bonus:4},
+  {id:'l6', name:'Miss Trois-Points', emoji:'🎯', rarity:'Argent', stat:'tir', bonus:4},
+  {id:'l7', name:'Le Mur Nord', emoji:'🧊', rarity:'Or', stat:'def', bonus:7},
+  {id:'l8', name:'Capitaine Clutch', emoji:'👑', rarity:'Or', stat:'iq', bonus:7},
+  {id:'l9', name:'Vega Suprême', emoji:'☄️', rarity:'Légende', stat:'tir', bonus:12},
+  {id:'l10', name:'Le Fantôme', emoji:'👻', rarity:'Légende', stat:'def', bonus:12},
+];
+const RARITY_ODDS = [
+  {r:'Bronze', p:0.50}, {r:'Argent', p:0.30}, {r:'Or', p:0.15}, {r:'Légende', p:0.05}
+];
+
+const ENERGY_MAX = 10;
+const ENERGY_REGEN_MS = 3*60*1000; // 1 energy per 3 min
+
+const CLUB_COLORS = ['#F2A73B','#E14B4B','#34D399','#38BDF8','#A78BFA','#F472B6','#FBBF24','#94A3B8'];
+const CLUB_EMBLEMS = ['🏀','🐺','🦅','🐍','🔥','⚡','🛡️','🐉','👑','🧊'];
+const WAGE_BASE = 20; // cash bonus per win, before contract raises
+const WAGE_RAISE_PER_LEVEL = 15;
+
+// Deterministically derive a color/emblem for a given club name, so the same
+// rival club always looks the same without needing a big parallel data table.
+function clubStyleFromName(name){
+  let hash = 0;
+  for(let i=0;i<name.length;i++){ hash = (hash*31 + name.charCodeAt(i)) >>> 0; }
+  return {
+    color: CLUB_COLORS[hash % CLUB_COLORS.length],
+    emblem: CLUB_EMBLEMS[Math.floor(hash/7) % CLUB_EMBLEMS.length],
+  };
+}
+
+// Build 3 competing contract offers: staying with your current club, plus two
+// rival suitors drawn from the teams in the stage you just qualified for.
+function generateOffers(stageIdx){
+  const pool = (OPP_NAMES[stageIdx] || []).slice();
+  const suitors = [];
+  while(suitors.length < 2 && pool.length){
+    const i = Math.floor(Math.random()*pool.length);
+    suitors.push(pool.splice(i,1)[0]);
+  }
+  const newWageLevel = state.contract.wageLevel + 1;
+  const baseWage = WAGE_BASE + (newWageLevel-1)*WAGE_RAISE_PER_LEVEL;
+  const offers = [{
+    type:'stay',
+    clubName: state.club.name, clubColor: state.club.color, clubEmblem: state.club.emblem,
+    wage: baseWage,
+    bonus: 40*newWageLevel,
+  }];
+  suitors.forEach(name=>{
+    const style = clubStyleFromName(name);
+    const variation = 0.9 + Math.random()*0.5; // rival offers range 0.9x - 1.4x
+    offers.push({
+      type:'transfer',
+      clubName:name, clubColor:style.color, clubEmblem:style.emblem,
+      wage: Math.round(baseWage*variation),
+      bonus: Math.round(40*newWageLevel*variation),
+    });
+  });
+  return offers;
+}
+
+/* ============================= STATE ============================= */
+
+let state = null;
+let currentScreen = 'home';
+let matchState = null; // active match runtime
+
+function defaultState(){
+  return {
+    name:'', posId:'PG',
+    level:1, xp:0,
+    stats:{tir:0,phys:0,def:0,iq:0},
+    statPoints:0,
+    energy:ENERGY_MAX, energyMax:ENERGY_MAX, lastEnergyTs:Date.now(),
+    cash:100, gems:60,
+    stageIndex:0, matchIndex:0,
+    legends:[],
+    missions:{date:todayStr(), train:0, win:0, pull:0, claimed:{}},
+    streak:1, lastLoginDate:todayStr(),
+    created:false,
+    club:{name:'Mon Club', color:CLUB_COLORS[0], emblem:CLUB_EMBLEMS[0]},
+    contract:{wageLevel:1, raiseAvailable:false},
+    pendingOffers:null,
+    totalWins:0,
+    onlineId:genOnlineId(),
+  };
+}
+
+function genOnlineId(){
+  if(window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
+  return 'p-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,10);
+}
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+}
+
+/* ============================= PERSISTENCE ============================= */
+/* Ce fichier tourne comme une page web autonome (pas dans l'apercu Artifacts
+   de Claude), donc on utilise localStorage — la sauvegarde classique du
+   navigateur — plutot que l'API window.storage qui n'existe que cote Claude. */
+
+const SAVE_KEY = 'asphalte-save-v1';
+
+function saveState(){
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+  }catch(e){
+    console.error('save failed', e);
+  }
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(raw){
+      state = JSON.parse(raw);
+      const d = defaultState();
+      if(!state.club) state.club = d.club;
+      if(!state.contract) state.contract = d.contract;
+      if(state.pendingOffers === undefined) state.pendingOffers = null;
+      if(state.totalWins === undefined) state.totalWins = 0;
+      if(!state.onlineId) state.onlineId = genOnlineId();
+    }else{
+      state = defaultState();
+    }
+  }catch(e){
+    state = defaultState();
+  }
+}
+
+/* ============================= DERIVED HELPERS ============================= */
+
+function posMeta(){ return POSITIONS.find(p=>p.id===state.posId) || POSITIONS[0]; }
+
+function legendBonusFor(statKey){
+  let b = 0;
+  state.legends.forEach(id=>{
+    const l = LEGEND_POOL.find(x=>x.id===id);
+    if(l && l.stat===statKey) b += l.bonus;
+  });
+  return b;
+}
+
+function effectiveStat(statKey){
+  const base = posMeta().base[statKey] + state.stats[statKey];
+  return Math.min(99, base + legendBonusFor(statKey));
+}
+
+function overallRating(){
+  const keys = Object.keys(STAT_META);
+  const sum = keys.reduce((a,k)=>a+effectiveStat(k),0);
+  return Math.round(sum/keys.length);
+}
+
+function xpToNext(){ return 100 + (state.level-1)*35; }
+
+function regenEnergy(){
+  const now = Date.now();
+  const elapsed = now - state.lastEnergyTs;
+  if(state.energy >= state.energyMax) { state.lastEnergyTs = now; return; }
+  const gained = Math.floor(elapsed / ENERGY_REGEN_MS);
+  if(gained > 0){
+    state.energy = Math.min(state.energyMax, state.energy + gained);
+    state.lastEnergyTs = state.energy >= state.energyMax ? now : state.lastEnergyTs + gained*ENERGY_REGEN_MS;
+  }
+}
+
+function checkDailyReset(){
+  const t = todayStr();
+  if(state.missions.date !== t){
+    // streak logic
+    const prev = new Date(state.lastLoginDate);
+    const cur = new Date(t);
+    const diffDays = Math.round((cur - prev) / 86400000);
+    state.streak = (diffDays === 1) ? state.streak + 1 : 1;
+    state.lastLoginDate = t;
+    state.missions = {date:t, train:0, win:0, pull:0, claimed:{}};
+    toast('🔥 Nouveau jour ! Série de '+state.streak+' jour(s)');
+  }
+}
+
+function addXP(amount){
+  state.xp += amount;
+  while(state.xp >= xpToNext()){
+    state.xp -= xpToNext();
+    state.level += 1;
+    state.statPoints += 2;
+    toast('🎉 Niveau '+state.level+' atteint ! +2 points de stat');
+  }
+}
+
+/* ============================= TOAST ============================= */
+
+function toast(msg){
+  const wrap = document.getElementById('toast-wrap');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.remove(); }, 2600);
+}
+
+/* ============================= RENDER: SCOREBOARD ============================= */
+
+function renderScoreboard(){
+  document.getElementById('sb-who').textContent = state.name || '—';
+  document.getElementById('sb-role').textContent = posMeta().name + ' · OVR ' + overallRating() + ' · ' + state.club.emblem + ' ' + state.club.name;
+  document.getElementById('sb-cash').textContent = state.cash;
+  document.getElementById('sb-gem').textContent = state.gems;
+  document.getElementById('sb-streak').textContent = state.streak;
+  document.getElementById('sb-level').textContent = state.level;
+  const pct = Math.min(100, Math.round((state.xp/xpToNext())*100));
+  document.getElementById('sb-xpfill').style.width = pct+'%';
+
+  const track = document.getElementById('sb-energy');
+  track.innerHTML='';
+  for(let i=0;i<state.energyMax;i++){
+    const pip = document.createElement('div');
+    pip.className = 'en-pip'+(i<state.energy?' on':'');
+    track.appendChild(pip);
+  }
+  document.getElementById('sb-energy-num').textContent = state.energy+'/'+state.energyMax;
+}
+
+/* ============================= RENDER: HOME ============================= */
+
+function renderHome(){
+  document.getElementById('home-name').innerHTML = (state.name||'—') + '<span>'+posMeta().emoji+' '+posMeta().name+'</span>';
+  document.getElementById('home-overall').innerHTML = overallRating() + '<span>Note Globale</span>';
+
+  const grid = document.getElementById('home-stats');
+  grid.innerHTML='';
+  Object.keys(STAT_META).forEach(k=>{
+    const meta = STAT_META[k];
+    const val = effectiveStat(k);
+    const box = document.createElement('div');
+    box.className='stat-box';
+    box.innerHTML = `<div class="lbl">${meta.emoji} ${meta.label}</div><div class="val">${val}</div><div class="stat-bar"><i style="width:${val}%"></i></div>`;
+    grid.appendChild(box);
+  });
+
+  const spCard = document.getElementById('statpoints-card');
+  if(state.statPoints > 0){
+    spCard.style.display='block';
+    document.getElementById('sp-count').textContent = state.statPoints;
+    const btnWrap = document.getElementById('sp-buttons');
+    btnWrap.innerHTML='';
+    Object.keys(STAT_META).forEach(k=>{
+      const meta = STAT_META[k];
+      const row = document.createElement('div');
+      row.className='train-choice';
+      row.innerHTML = `<div class="tleft"><span class="emoji">${meta.emoji}</span><div><div class="tname">${meta.label}</div><div class="tval">Actuel : ${effectiveStat(k)}</div></div></div><div class="tcost">+1 ➜</div>`;
+      row.onclick = ()=>{
+        state.stats[k] += 1;
+        state.statPoints -= 1;
+        saveState();
+        renderAll();
+        toast('+1 '+meta.label);
+      };
+      btnWrap.appendChild(row);
+    });
+  } else {
+    spCard.style.display='none';
+  }
+
+  renderClubCard();
+  renderMissions('home-missions');
+}
+
+let clubEditOpen = false;
+
+function renderClubCard(){
+  const card = document.getElementById('club-card');
+  const wage = WAGE_BASE + (state.contract.wageLevel-1)*WAGE_RAISE_PER_LEVEL;
+
+  if(clubEditOpen){
+    card.innerHTML = `
+      <h3 style="margin:0 0 10px; font-size:14px;">✏️ Modifier mon club</h3>
+      <input id="ce-name" class="ob-input" style="max-width:none;" maxlength="20" value="${state.club.name}">
+      <div class="swatch-row" id="ce-colors" style="max-width:none;"></div>
+      <div class="swatch-row" id="ce-emblems" style="max-width:none;"></div>
+      <div class="btn-row">
+        <button class="btn secondary" id="ce-cancel">Annuler</button>
+        <button class="btn" id="ce-save">Enregistrer</button>
+      </div>
+    `;
+    let selColor = state.club.color, selEmblem = state.club.emblem;
+    const colorWrap = document.getElementById('ce-colors');
+    const emblemWrap = document.getElementById('ce-emblems');
+    CLUB_COLORS.forEach(c=>{
+      const sw = document.createElement('div');
+      sw.className = 'color-swatch'+(c===selColor?' sel':'');
+      sw.style.background = c;
+      sw.onclick = ()=>{
+        colorWrap.querySelectorAll('.color-swatch').forEach(x=>x.classList.remove('sel'));
+        sw.classList.add('sel'); selColor = c;
+      };
+      colorWrap.appendChild(sw);
+    });
+    CLUB_EMBLEMS.forEach(e=>{
+      const sw = document.createElement('div');
+      sw.className = 'emblem-swatch'+(e===selEmblem?' sel':'');
+      sw.textContent = e;
+      sw.onclick = ()=>{
+        emblemWrap.querySelectorAll('.emblem-swatch').forEach(x=>x.classList.remove('sel'));
+        sw.classList.add('sel'); selEmblem = e;
+      };
+      emblemWrap.appendChild(sw);
+    });
+    document.getElementById('ce-cancel').onclick = ()=>{ clubEditOpen = false; renderAll(); };
+    document.getElementById('ce-save').onclick = ()=>{
+      const newName = document.getElementById('ce-name').value.trim() || 'Mon Club';
+      state.club = {name:newName, color:selColor, emblem:selEmblem};
+      clubEditOpen = false;
+      saveState();
+      toast('🏀 Club mis à jour !');
+      renderAll();
+    };
+    return;
+  }
+
+  card.innerHTML = `
+    <div class="club-preview" style="margin-bottom:${state.pendingOffers?'12px':'0'}; max-width:none;">
+      <div class="cp-emblem" style="background:${state.club.color};">${state.club.emblem}</div>
+      <div class="cp-text">Ton club<b>${state.club.name}</b></div>
+      <button class="btn ghost" id="edit-club-btn" style="width:auto; padding:8px 12px; font-size:11px; margin-left:auto;">Modifier</button>
+    </div>
+    <div style="font-size:12px; color:var(--chalk-dim); margin-top:${state.pendingOffers?'0':'10px'};">
+      Contrat niveau ${state.contract.wageLevel} · prime de <b style="color:var(--chalk);">+${wage} 💵</b> par victoire
+    </div>
+    ${state.pendingOffers ? renderOffersHTML(state.pendingOffers) : renderMarketHintHTML()}
+  `;
+  const editBtn = document.getElementById('edit-club-btn');
+  if(editBtn) editBtn.onclick = ()=>{ clubEditOpen = true; renderAll(); };
+
+  if(state.pendingOffers){
+    card.querySelectorAll('.offer-sign-btn').forEach(btn=>{
+      btn.onclick = ()=> signOffer(parseInt(btn.dataset.idx));
+    });
+  }
+}
+
+function renderOffersHTML(offers){
+  const header = `
+    <h3 style="margin:14px 0 4px; font-size:14px;">📋 Marché des transferts</h3>
+    <p style="font-size:11.5px; color:var(--chalk-dim); margin:0 0 10px;">Ton contrat arrive à échéance — choisis où continuer ta carrière.</p>
+  `;
+  const cards = offers.map((o,i)=>`
+    <div class="legend-card" style="border-left:4px solid ${o.clubColor};">
+      <div class="legend-emoji" style="background:${o.clubColor}; border-radius:9px; width:38px; height:38px; display:flex; align-items:center; justify-content:center; font-size:19px;">${o.clubEmblem}</div>
+      <div class="legend-info">
+        <div class="lname">${o.type==='stay' ? 'Rester à '+o.clubName : 'Rejoindre '+o.clubName}</div>
+        <div class="lmeta">+${o.wage} 💵/victoire · signature +${o.bonus} 💵</div>
+      </div>
+      <button class="btn offer-sign-btn" data-idx="${i}" style="width:auto; padding:8px 12px; font-size:11px; margin-left:auto;">Signer</button>
+    </div>
+  `).join('');
+  return header + cards;
+}
+
+function renderMarketHintHTML(){
+  if(state.stageIndex >= STAGES.length){
+    return `<div style="font-size:11.5px; color:var(--chalk-dim); margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.06);">🏆 Saison terminée — plus de nouvelles offres pour l'instant.</div>`;
+  }
+  const total = OPP_NAMES[state.stageIndex].length;
+  const remaining = Math.max(0, total - state.matchIndex);
+  return `
+    <div style="font-size:11.5px; color:var(--chalk-dim); margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.06);">
+      📋 <b style="color:var(--chalk);">Marché des transferts</b> — gagne encore <b style="color:var(--amber);">${remaining}</b> match${remaining>1?'s':''} dans « ${STAGES[state.stageIndex].name} » (onglet Match) pour recevoir des offres de contrat.
+    </div>
+  `;
+}
+
+function signOffer(idx){
+  const offer = state.pendingOffers[idx];
+  if(!offer) return;
+  state.club = {name:offer.clubName, color:offer.clubColor, emblem:offer.clubEmblem};
+  state.contract.wageLevel += 1;
+  state.cash += offer.bonus;
+  state.pendingOffers = null;
+  saveState();
+  toast(offer.type==='stay'
+    ? `✍️ Contrat prolongé avec ${offer.clubName} !`
+    : `🔁 Transfert signé ! Tu rejoins ${offer.clubName}.`);
+  renderAll();
+}
+
+function renderMissions(containerId){
+  const c = document.getElementById(containerId);
+  c.innerHTML='';
+  const defs = [
+    {key:'train', label:"S'entraîner 3 fois", target:3, reward:'+40 💎', apply:()=>{state.gems+=40;}},
+    {key:'win', label:'Gagner 1 match', target:1, reward:'+60 💎', apply:()=>{state.gems+=60;}},
+    {key:'pull', label:'Recruter 1 légende', target:1, reward:'+30 💵', apply:()=>{state.cash+=30;}},
+  ];
+  defs.forEach(d=>{
+    const progress = Math.min(d.target, state.missions[d.key]||0);
+    const done = progress >= d.target;
+    const claimed = !!state.missions.claimed[d.key];
+    const row = document.createElement('div');
+    row.className='mission-row';
+    row.innerHTML = `
+      <div class="mission-check ${done?'done':''}">${done?'✓':''}</div>
+      <div class="mtext">${d.label}<div class="mprog">${progress}/${d.target} · récompense ${d.reward}</div></div>
+    `;
+    if(done && !claimed){
+      const btn = document.createElement('button');
+      btn.className='btn'; btn.style.width='auto'; btn.style.padding='7px 12px'; btn.style.fontSize='11px';
+      btn.textContent='Réclamer';
+      btn.onclick = ()=>{
+        d.apply();
+        state.missions.claimed[d.key] = true;
+        saveState();
+        renderAll();
+        toast('Récompense récupérée !');
+      };
+      row.appendChild(btn);
+    } else if(claimed){
+      const badge = document.createElement('div');
+      badge.style.fontSize='11px'; badge.style.color='var(--good)'; badge.textContent='Fait ✓';
+      row.appendChild(badge);
+    }
+    c.appendChild(row);
+  });
+}
+
+/* ============================= RENDER: TRAIN ============================= */
+
+let trainingBusy = false; // true while a minigame is on screen, blocks renderAll from wiping it
+
+function renderTrain(){
+  const list = document.getElementById('train-list');
+  list.innerHTML='';
+  Object.keys(STAT_META).forEach(k=>{
+    const meta = STAT_META[k];
+    const row = document.createElement('div');
+    row.className='train-choice';
+    row.innerHTML = `<div class="tleft"><span class="emoji">${meta.emoji}</span><div><div class="tname">${meta.label}</div><div class="tval">Actuel : ${effectiveStat(k)}</div></div></div><div class="tcost">−2 ⚡</div>`;
+    row.onclick = ()=> startTrainingSession(k);
+    list.appendChild(row);
+  });
+}
+
+// Deduct the energy cost up front (once, guarded), then launch the themed minigame for that stat.
+function startTrainingSession(statKey){
+  if(state.energy < 2){ toast("⚡ Pas assez d'énergie ! Reviens plus tard."); return; }
+  state.energy -= 2;
+  saveState();
+  renderScoreboard();
+  trainingBusy = true;
+  if(statKey==='tir') openShootingGame();
+  else if(statKey==='phys') openSprintGame();
+  else if(statKey==='def') openBlockGame();
+  else openReadGame();
+}
+
+// Shared resolver — every minigame ends by calling this exactly once (each minigame
+// guards itself with a local `resolved` flag so double-clicks can't fire it twice).
+function finishTraining(statKey, tier){
+  const meta = STAT_META[statKey];
+  const gainMap = {miss:1, good:2, perfect:3};
+  const xpMap = {miss:6, good:12, perfect:20};
+  const gain = gainMap[tier];
+  state.stats[statKey] += gain;
+  addXP(xpMap[tier]);
+  state.missions.train = (state.missions.train||0) + 1;
+  if(tier==='perfect'){ state.cash += 10; }
+  saveState();
+  const label = tier==='perfect' ? '💥 PARFAIT !' : tier==='good' ? '👍 Bien joué !' : '🙂 Séance terminée';
+  toast(`${label} +${gain} ${meta.label}${tier==='perfect' ? ', +10 💵' : ''}`);
+  trainingBusy = false;
+  renderAll();
+}
+
+function cancelTraining(refundEnergy){
+  if(refundEnergy){ state.energy = Math.min(state.energyMax, state.energy + 2); }
+  trainingBusy = false;
+  saveState();
+  renderAll();
+}
+
+/* --- TIR : Lancer Franc (barre de puissance, vise la zone dorée) --- */
+function openShootingGame(){
+  const body = document.getElementById('train-list');
+  body.innerHTML = `
+    <div class="card minigame-wrap">
+      <h3 style="margin:0 0 4px; font-size:15px;">🎯 Lancer Franc</h3>
+      <p style="font-size:12px; color:var(--chalk-dim); margin:0 0 6px;">Arrête la barre dans la zone dorée pour un tir parfait !</p>
+      <div class="mg-track" id="mg-track">
+        <div class="mg-zone" id="mg-zone-outer"></div>
+        <div class="mg-zone" id="mg-zone-inner" style="background:rgba(255,196,64,.5); border-color:#F2C879;"></div>
+        <div class="mg-cursor" id="mg-cursor"></div>
+      </div>
+      <button class="btn" id="mg-stop">TIRE !</button>
+      <button class="btn ghost" id="mg-cancel" style="margin-top:8px;">Annuler (énergie remboursée)</button>
+    </div>
+  `;
+  const outerW = 34, innerW = 12;
+  const outerStart = 14 + Math.random()*40;
+  const innerStart = outerStart + (outerW-innerW)/2;
+  const outerEl = document.getElementById('mg-zone-outer');
+  outerEl.style.left = outerStart+'%'; outerEl.style.width = outerW+'%';
+  const innerEl = document.getElementById('mg-zone-inner');
+  innerEl.style.left = innerStart+'%'; innerEl.style.width = innerW+'%';
+
+  let pos = 0, dir = 1, resolved = false;
+  const cursor = document.getElementById('mg-cursor');
+  const interval = setInterval(()=>{
+    pos += dir*1.8;
+    if(pos >= 100){ pos = 100; dir = -1; }
+    if(pos <= 0){ pos = 0; dir = 1; }
+    cursor.style.left = pos+'%';
+  }, 16);
+
+  document.getElementById('mg-cancel').onclick = ()=>{
+    if(resolved) return; resolved = true;
+    clearInterval(interval);
+    cancelTraining(true);
+  };
+  document.getElementById('mg-stop').onclick = (e)=>{
+    if(resolved) return; resolved = true;
+    e.target.disabled = true;
+    clearInterval(interval);
+    let tier = 'miss';
+    if(pos >= innerStart && pos <= innerStart+innerW) tier = 'perfect';
+    else if(pos >= outerStart && pos <= outerStart+outerW) tier = 'good';
+    finishTraining('tir', tier);
+  };
+}
+
+/* --- PHYSIQUE : Sprint Explosif (tape le plus vite possible en 3s) --- */
+function openSprintGame(){
+  const body = document.getElementById('train-list');
+  body.innerHTML = `
+    <div class="card minigame-wrap">
+      <h3 style="margin:0 0 4px; font-size:15px;">⚡ Sprint Explosif</h3>
+      <p style="font-size:12px; color:var(--chalk-dim); margin:0 0 10px;">Tape le ballon le plus vite possible pendant 3 secondes !</p>
+      <div class="display" style="font-size:40px; margin:8px 0; color:var(--amber);" id="sprint-count">3.0s</div>
+      <button class="btn" id="sprint-tap" style="font-size:18px; padding:22px;">🏀 TAPE !</button>
+      <div style="margin-top:10px; font-size:12.5px; color:var(--chalk-dim);">Taps : <span id="sprint-taps" class="mono">0</span></div>
+    </div>
+  `;
+  let taps = 0, timeLeft = 3.0, started = false, resolved = false, tickInterval = null;
+  const countEl = document.getElementById('sprint-count');
+  const tapsEl = document.getElementById('sprint-taps');
+  const btn = document.getElementById('sprint-tap');
+
+  function endGame(){
+    if(resolved) return; resolved = true;
+    clearInterval(tickInterval);
+    btn.disabled = true;
+    let tier = 'miss';
+    if(taps >= 16) tier = 'perfect';
+    else if(taps >= 9) tier = 'good';
+    finishTraining('phys', tier);
+  }
+
+  btn.onclick = ()=>{
+    if(resolved) return;
+    if(!started){
+      started = true;
+      tickInterval = setInterval(()=>{
+        timeLeft -= 0.1;
+        if(timeLeft <= 0.001){
+          countEl.textContent = '0.0s';
+          endGame();
+          return;
+        }
+        countEl.textContent = timeLeft.toFixed(1)+'s';
+      }, 100);
+    }
+    taps += 1;
+    tapsEl.textContent = taps;
+  };
+}
+
+/* --- DEFENSE : Anticipation (3 tests de reaction) --- */
+function openBlockGame(){
+  const body = document.getElementById('train-list');
+  body.innerHTML = `
+    <div class="card minigame-wrap">
+      <h3 style="margin:0 0 4px; font-size:15px;">🛡️ Anticipation Défensive</h3>
+      <p style="font-size:12px; color:var(--chalk-dim); margin:0 0 10px;">Attends le flash rouge, puis tape CONTRER le plus vite possible. 3 manches.</p>
+      <div id="block-zone" style="height:88px; border-radius:12px; background:rgba(0,0,0,.3); display:flex; align-items:center; justify-content:center; font-size:14px; color:var(--chalk-dim); margin-bottom:12px;">Prépare-toi...</div>
+      <button class="btn" id="block-btn">CONTRER !</button>
+    </div>
+  `;
+  const zone = document.getElementById('block-zone');
+  const btn = document.getElementById('block-btn');
+  let round = 0, totalRounds = 3, waitTimeout = null, showTime = 0, times = [], resolved = false, roundActive = false;
+
+  function nextRound(){
+    if(round >= totalRounds){ finish(); return; }
+    round += 1;
+    roundActive = false;
+    zone.style.background = 'rgba(0,0,0,.3)';
+    zone.textContent = 'Manche '+round+'/3 — attends...';
+    const delay = 700 + Math.random()*1700;
+    waitTimeout = setTimeout(()=>{
+      roundActive = true;
+      showTime = performance.now();
+      zone.style.background = 'rgba(239,68,68,.5)';
+      zone.textContent = 'CONTRER !';
+    }, delay);
+  }
+
+  function finish(){
+    if(resolved) return; resolved = true;
+    btn.disabled = true;
+    const valid = times.filter(t=>t < 999);
+    const avg = valid.length ? valid.reduce((a,b)=>a+b,0)/valid.length : 999;
+    let tier = 'miss';
+    if(valid.length===totalRounds && avg <= 380) tier = 'perfect';
+    else if(valid.length >= 2 && avg <= 650) tier = 'good';
+    finishTraining('def', tier);
+  }
+
+  btn.onclick = ()=>{
+    if(resolved) return;
+    if(!roundActive){
+      zone.textContent = 'Trop tôt !';
+      times.push(999);
+      clearTimeout(waitTimeout);
+      setTimeout(nextRound, 500);
+      return;
+    }
+    const rt = performance.now() - showTime;
+    times.push(rt);
+    roundActive = false;
+    zone.style.background = 'rgba(74,222,128,.4)';
+    zone.textContent = Math.round(rt)+' ms !';
+    setTimeout(nextRound, 500);
+  };
+
+  nextRound();
+}
+
+/* --- QI BASKET : Lecture de Jeu (memorise puis reproduis la sequence de passes) --- */
+function openReadGame(){
+  const body = document.getElementById('train-list');
+  const zones = [{k:'G',label:'⬅️'},{k:'C',label:'⏺️'},{k:'D',label:'➡️'},{k:'P',label:'🏀'}];
+  body.innerHTML = `
+    <div class="card minigame-wrap">
+      <h3 style="margin:0 0 4px; font-size:15px;">🧠 Lecture de Jeu</h3>
+      <p style="font-size:12px; color:var(--chalk-dim); margin:0 0 10px;">Mémorise la séquence de passes, puis reproduis-la dans le bon ordre.</p>
+      <div id="read-status" style="font-size:12.5px; color:var(--chalk-dim); margin-bottom:10px;">Regarde bien...</div>
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px;" id="read-grid"></div>
+    </div>
+  `;
+  const grid = document.getElementById('read-grid');
+  const status = document.getElementById('read-status');
+  zones.forEach(z=>{
+    const b = document.createElement('button');
+    b.className = 'btn secondary';
+    b.style.fontSize = '22px'; b.style.padding = '18px 0';
+    b.dataset.k = z.k;
+    b.textContent = z.label;
+    b.disabled = true;
+    grid.appendChild(b);
+  });
+
+  const seqLen = 4;
+  const sequence = [];
+  for(let i=0;i<seqLen;i++){ sequence.push(zones[Math.floor(Math.random()*zones.length)].k); }
+  let userSeq = [], resolved = false;
+
+  function flash(k, cb){
+    const btn = grid.querySelector(`[data-k="${k}"]`);
+    btn.style.background = 'rgba(242,167,59,.5)';
+    setTimeout(()=>{ btn.style.background=''; if(cb) cb(); }, 420);
+  }
+  function playSequence(i){
+    if(i >= sequence.length){
+      status.textContent = 'À toi de jouer !';
+      grid.querySelectorAll('button').forEach(b=>b.disabled=false);
+      return;
+    }
+    flash(sequence[i], ()=> setTimeout(()=>playSequence(i+1), 150));
+  }
+  setTimeout(()=>playSequence(0), 500);
+
+  grid.querySelectorAll('button').forEach(b=>{
+    b.onclick = ()=>{
+      if(resolved || b.disabled) return;
+      userSeq.push(b.dataset.k);
+      flash(b.dataset.k);
+      if(userSeq.length === sequence.length){
+        grid.querySelectorAll('button').forEach(x=>x.disabled=true);
+        resolved = true;
+        let correct = 0;
+        for(let i=0;i<sequence.length;i++){ if(userSeq[i]===sequence[i]) correct++; }
+        let tier = 'miss';
+        if(correct === sequence.length) tier = 'perfect';
+        else if(correct >= sequence.length-1) tier = 'good';
+        setTimeout(()=>finishTraining('iq', tier), 400);
+      }
+    };
+  });
+}
+
+/* ============================= RENDER: MATCH ============================= */
+
+function currentMatchInfo(){
+  if(state.stageIndex >= STAGES.length) return null;
+  const stage = STAGES[state.stageIndex];
+  const names = OPP_NAMES[state.stageIndex];
+  if(state.matchIndex >= names.length) return null;
+  const opp = names[state.matchIndex];
+  const oppDef = stage.oppBase + state.matchIndex*4 + state.stageIndex*2;
+  return {stage, opp, oppDef};
+}
+
+function renderMatch(){
+  const body = document.getElementById('match-body');
+  const sub = document.getElementById('match-sub');
+  const info = currentMatchInfo();
+
+  if(matchState && matchState.active){
+    renderMatchActive();
+    return;
+  }
+
+  if(!info){
+    sub.textContent = "Tu as conquis toute la saison actuelle. Regarde l'onglet Saison !";
+    body.innerHTML = '<div class="card" style="text-align:center;">🏆 Tous les matchs disponibles sont terminés pour l’instant.</div>';
+    return;
+  }
+
+  sub.textContent = info.stage.name + ' — ' + info.stage.tag;
+  body.innerHTML = `
+    <div class="card">
+      <div class="stage-pill">Prochain match</div>
+      <h3 style="margin:6px 0 4px; font-size:17px;">Contre ${info.opp}</h3>
+      <p style="font-size:12px; color:var(--chalk-dim); margin:0 0 14px;">Défense adverse estimée : ${info.oppDef}</p>
+      <button class="btn" id="start-match-btn">🏀 Lancer le match (−3 ⚡)</button>
+    </div>
+  `;
+  document.getElementById('start-match-btn').onclick = startMatch;
+}
+
+function startMatch(){
+  if(state.energy < 3){ toast("⚡ Pas assez d'énergie pour jouer !"); return; }
+  const info = currentMatchInfo();
+  if(!info) return;
+  state.energy -= 3;
+  saveState();
+  matchState = {
+    active:true,
+    opp: info.opp,
+    oppDef: info.oppDef,
+    stageIndex: state.stageIndex,
+    matchIndex: state.matchIndex,
+    myScore:0, oppScore:0,
+    possession:1, totalPossessions:5,
+    log:[],
+  };
+  renderAll();
+}
+
+const ACTIONS = [
+  {id:'three', label:'🎯 Tir à 3 points', stat:'tir', points:3, riskDiv:1.0},
+  {id:'drive', label:'⚡ Pénétration', stat:'phys', points:2, riskDiv:0.85},
+  {id:'assist', label:'🧠 Jeu collectif', stat:'iq', points:2, riskDiv:0.9},
+];
+
+function renderMatchActive(){
+  const body = document.getElementById('match-body');
+  const sub = document.getElementById('match-sub');
+  sub.textContent = 'Possession '+matchState.possession+' / '+matchState.totalPossessions;
+
+  let html = `
+    <div class="card">
+      <div class="vs-row">
+        <div class="vs-team"><div class="tag">${state.club.emblem} ${state.club.name}</div><div class="score display" style="color:${state.club.color};">${matchState.myScore}</div></div>
+        <div class="vs-mid">VS</div>
+        <div class="vs-team"><div class="tag">${matchState.opp.split(' ').slice(0,2).join(' ')}</div><div class="score display">${matchState.oppScore}</div></div>
+      </div>
+      <div class="possession-log">${matchState.log.slice(-6).map(l=>`<div>${l}</div>`).join('') || '<div>Le match commence...</div>'}</div>
+  `;
+
+  if(matchState.myTurnResolved){
+    html += `<button class="btn" id="next-poss-btn">Possession suivante ➜</button>`;
+  } else {
+    html += `<p style="font-size:12px; color:var(--chalk-dim); margin:10px 0 8px;">Choisis ton action offensive :</p>`;
+    ACTIONS.forEach(a=>{
+      const myStat = effectiveStat(a.stat);
+      const chance = Math.max(15, Math.min(90, Math.round(50 + (myStat - matchState.oppDef)/a.riskDiv/2)));
+      html += `<button class="action-btn" data-action="${a.id}">${a.label} <span class="chance">${chance}%</span></button>`;
+    });
+  }
+
+  html += `</div>`;
+  body.innerHTML = html;
+
+  if(!matchState.myTurnResolved){
+    body.querySelectorAll('.action-btn').forEach(btn=>{
+      btn.onclick = ()=> resolvePossession(btn.getAttribute('data-action'));
+    });
+  } else {
+    const nb = document.getElementById('next-poss-btn');
+    if(nb) nb.onclick = advancePossession;
+  }
+}
+
+function resolvePossession(actionId){
+  const a = ACTIONS.find(x=>x.id===actionId);
+  const myStat = effectiveStat(a.stat);
+  const chance = Math.max(15, Math.min(90, Math.round(50 + (myStat - matchState.oppDef)/a.riskDiv/2)));
+  const roll = Math.random()*100;
+  const success = roll <= chance;
+
+  if(success){
+    matchState.myScore += a.points;
+    matchState.log.push(`✅ ${a.label} réussi ! +${a.points} pts`);
+  } else {
+    matchState.log.push(`❌ ${a.label} raté.`);
+  }
+
+  // opponent auto-response based on player's defense
+  const myDef = effectiveStat('def');
+  const oppChance = Math.max(15, Math.min(85, Math.round(55 + (matchState.oppDef - myDef)/2)));
+  const oppRoll = Math.random()*100;
+  const oppPts = oppRoll <= 40 ? 3 : 2;
+  if(oppRoll <= oppChance){
+    matchState.oppScore += oppPts;
+    matchState.log.push(`🔴 ${matchState.opp} répond avec +${oppPts} pts.`);
+  } else {
+    matchState.log.push(`🛡️ Ta défense repousse l'attaque adverse !`);
+  }
+
+  matchState.myTurnResolved = true;
+  renderAll();
+}
+
+function advancePossession(){
+  matchState.possession += 1;
+  matchState.myTurnResolved = false;
+  if(matchState.possession > matchState.totalPossessions){
+    finishMatch();
+  } else {
+    renderAll();
+  }
+}
+
+function finishMatch(){
+  const win = matchState.myScore >= matchState.oppScore;
+  const stageMultiplier = 1 + matchState.stageIndex*0.4;
+  const wageBonus = win ? (WAGE_BASE + (state.contract.wageLevel-1)*WAGE_RAISE_PER_LEVEL) : 0;
+  const cashReward = Math.round((win?70:25) * stageMultiplier) + wageBonus;
+  const gemReward = win ? Math.round(15*stageMultiplier) : 0;
+  const xpReward = win ? 60 : 25;
+
+  state.cash += cashReward;
+  state.gems += gemReward;
+  addXP(xpReward);
+
+  if(win){
+    state.missions.win = (state.missions.win||0) + 1;
+    state.totalWins = (state.totalWins||0) + 1;
+    state.matchIndex += 1;
+    const names = OPP_NAMES[state.stageIndex];
+    if(state.matchIndex >= names.length){
+      state.matchIndex = 0;
+      state.stageIndex += 1;
+      if(state.stageIndex < STAGES.length){
+        state.pendingOffers = generateOffers(state.stageIndex);
+        toast('🏆 Nouvelle étape débloquée : '+STAGES[state.stageIndex].name+' ! Des clubs te font des offres.');
+      } else {
+        toast('👑 Tu as terminé toute la saison ! Légende absolue.');
+      }
+    }
+  }
+
+  const resultInfo = {
+    win, myScore:matchState.myScore, oppScore:matchState.oppScore,
+    opp:matchState.opp, cashReward, gemReward, xpReward, wageBonus
+  };
+  matchState = null;
+  saveState();
+  renderAll();
+  showMatchResult(resultInfo);
+}
+
+function showMatchResult(r){
+  const body = document.getElementById('match-body');
+  body.innerHTML = `
+    <div class="card" style="text-align:center;">
+      <div style="font-size:38px; margin-bottom:6px;">${r.win?'🏆':'💔'}</div>
+      <h3 class="display" style="font-size:22px; margin:0 0 4px; color:${r.win?'var(--good)':'var(--bad)'};">${r.win?'VICTOIRE':'DÉFAITE'}</h3>
+      <p style="font-size:13px; color:var(--chalk-dim); margin:0 0 14px;">${r.myScore} — ${r.oppScore} contre ${r.opp}</p>
+      <div class="stat-grid" style="margin-bottom:14px;">
+        <div class="stat-box"><div class="lbl">Cash</div><div class="val">+${r.cashReward} 💵</div></div>
+        <div class="stat-box"><div class="lbl">Gemmes</div><div class="val">+${r.gemReward} 💎</div></div>
+      </div>
+      <button class="btn" id="result-continue">Continuer</button>
+    </div>
+  `;
+  document.getElementById('result-continue').onclick = ()=>{ renderAll(); };
+}
+
+/* ============================= RENDER: LEGENDS ============================= */
+
+let pullReveal = null; // holds the legend just pulled, until the user taps "Continuer"
+
+function renderLegends(){
+  document.getElementById('legend-count').textContent = state.legends.length;
+  const list = document.getElementById('legend-list');
+  list.innerHTML='';
+  if(state.legends.length === 0){
+    list.innerHTML = '<div class="card" style="text-align:center; color:var(--chalk-dim); font-size:13px;">Aucune légende recrutée. Fais un tirage !</div>';
+  }
+  const owned = [...new Set(state.legends)];
+  owned.forEach(id=>{
+    const l = LEGEND_POOL.find(x=>x.id===id);
+    if(!l) return;
+    const count = state.legends.filter(x=>x===id).length;
+    const div = document.createElement('div');
+    div.className = 'legend-card rarity-'+l.rarity.replace('é','e');
+    div.innerHTML = `
+      <div class="legend-emoji">${l.emoji}</div>
+      <div class="legend-info">
+        <div class="lname">${l.name} ${count>1?'x'+count:''}</div>
+        <div class="lmeta">+${l.bonus} ${STAT_META[l.stat].label}</div>
+      </div>
+      <div class="rarity-pill ${l.rarity.replace('é','e')}">${l.rarity}</div>
+    `;
+    list.appendChild(div);
+  });
+
+  // The pull card is fully rebuilt every render, so it never gets stuck
+  // pointing at DOM elements a previous pull already replaced.
+  const wrap = document.getElementById('gacha-card-wrap');
+  if(pullReveal){
+    const picked = pullReveal;
+    wrap.innerHTML = `
+      <div class="card gacha-pull-card">
+        <span class="pull-emoji">${picked.emoji}</span>
+        <div class="rarity-pill ${picked.rarity.replace('é','e')}" style="display:inline-block; margin-bottom:8px;">${picked.rarity}</div>
+        <h3 style="margin:4px 0; font-size:18px;">${picked.name}</h3>
+        <p style="font-size:12.5px; color:var(--chalk-dim); margin:0 0 16px;">+${picked.bonus} ${STAT_META[picked.stat].label} en permanence</p>
+        <button class="btn" id="pull-again">Continuer</button>
+      </div>
+    `;
+    document.getElementById('pull-again').onclick = ()=>{
+      pullReveal = null;
+      renderAll();
+    };
+  } else {
+    wrap.innerHTML = `
+      <div class="card gacha-pull-card">
+        <span class="pull-emoji">🎁</span>
+        <div style="font-size:13px; color:var(--chalk-dim); margin-bottom:14px;">Un tirage coûte <b style="color:var(--gem);">50 💎</b></div>
+        <button class="btn" id="pull-btn">Recruter une légende</button>
+      </div>
+    `;
+    document.getElementById('pull-btn').onclick = doPull;
+  }
+}
+
+function rollRarity(){
+  const r = Math.random();
+  let cum = 0;
+  for(const o of RARITY_ODDS){
+    cum += o.p;
+    if(r <= cum) return o.r;
+  }
+  return 'Bronze';
+}
+
+function doPull(){
+  if(state.gems < 50){ toast('💎 Pas assez de gemmes ! (50 requis)'); return; }
+  state.gems -= 50;
+  const rarity = rollRarity();
+  const pool = LEGEND_POOL.filter(l=>l.rarity===rarity);
+  const picked = pool[Math.floor(Math.random()*pool.length)];
+  state.legends.push(picked.id);
+  state.missions.pull = (state.missions.pull||0) + 1;
+  pullReveal = picked;
+  saveState();
+  renderAll();
+  toast(rarity==='Légende' ? '🌈 LÉGENDE OBTENUE !' : 'Nouveau mentor recruté !');
+}
+
+/* ============================= RENDER: SEASON ============================= */
+
+function renderSeason(){
+  const body = document.getElementById('season-body');
+  body.innerHTML='';
+  STAGES.forEach((stage, si)=>{
+    const card = document.createElement('div');
+    card.className='card';
+    let inner = `<div class="stage-pill">${stage.tag}</div><h3 style="margin:4px 0 10px; font-size:16px;">${stage.name}</h3>`;
+    OPP_NAMES[si].forEach((opp, mi)=>{
+      let status = '🔒', cls='locked';
+      if(si < state.stageIndex || (si === state.stageIndex && mi < state.matchIndex)){
+        status='✅'; cls='';
+      } else if(si === state.stageIndex && mi === state.matchIndex){
+        status='▶️'; cls='';
+      }
+      inner += `<div class="match-row ${cls}"><div><div class="opp">${opp}</div><div class="diff">Défense ${stage.oppBase + mi*4 + si*2}</div></div><div class="status">${status}</div></div>`;
+    });
+    card.innerHTML = inner;
+    body.appendChild(card);
+  });
+}
+
+/* ============================= NAV / MASTER RENDER ============================= */
+
+function switchScreen(name){
+  currentScreen = name;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    b.classList.toggle('active', b.getAttribute('data-screen')===name);
+  });
+  renderAll();
+}
+
+function renderAll(){
+  regenEnergy();
+  renderScoreboard();
+  if(currentScreen==='home') renderHome();
+  if(currentScreen==='train' && !trainingBusy) renderTrain();
+  if(currentScreen==='match') renderMatch();
+  if(currentScreen==='legends') renderLegends();
+  if(currentScreen==='season') renderSeason();
+  if(currentScreen==='rank') renderRank();
+  saveState();
+}
+
+/* ============================= LEADERBOARD (Firebase) ============================= */
+
+function computeScore(){
+  return state.level*50 + overallRating()*3 + (state.totalWins||0)*10;
+}
+
+function escapeHtml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderRank(){
+  const body = document.getElementById('rank-body');
+  const status = window.LeaderboardStatus;
+
+  if(status === 'not_configured'){
+    body.innerHTML = `
+      <div class="card" style="text-align:center;">
+        <div style="font-size:34px; margin-bottom:8px;">🛠️</div>
+        <h3 style="margin:0 0 8px; font-size:15px;">Classement pas encore activé</h3>
+        <p style="font-size:12.5px; color:var(--chalk-dim); margin:0;">Le classement mondial a besoin d'une base de données en ligne (gratuite) à connecter. Reviens un peu plus tard !</p>
+      </div>`;
+    return;
+  }
+
+  if(status === 'error'){
+    body.innerHTML = `
+      <div class="card" style="text-align:center;">
+        <p style="font-size:12.5px; color:var(--chalk-dim); margin:0 0 12px;">Impossible de se connecter au classement pour l'instant.</p>
+        <button class="btn secondary" id="rank-retry">Réessayer</button>
+      </div>`;
+    const retryBtn = document.getElementById('rank-retry');
+    if(retryBtn) retryBtn.onclick = ()=>{ location.reload(); };
+    return;
+  }
+
+  if(status !== 'ready'){
+    body.innerHTML = `<div class="card" style="text-align:center; color:var(--chalk-dim); font-size:13px;">Connexion au classement...</div>`;
+    setTimeout(()=>{ if(currentScreen==='rank') renderRank(); }, 700);
+    return;
+  }
+
+  body.innerHTML = `
+    <div class="card">
+      <div style="font-size:12.5px; color:var(--chalk-dim); margin-bottom:10px;">Publie ton score pour apparaître dans le classement mondial. Tu peux le republier à tout moment pour le mettre à jour.</div>
+      <button class="btn" id="rank-publish">📡 Publier mon score (${computeScore()} pts)</button>
+    </div>
+    <div id="rank-list"><div class="card" style="text-align:center; color:var(--chalk-dim); font-size:13px;">Chargement du classement...</div></div>
+  `;
+  const publishBtn = document.getElementById('rank-publish');
+  if(publishBtn) publishBtn.onclick = publishScore;
+  loadRankList();
+}
+
+async function publishScore(){
+  const btn = document.getElementById('rank-publish');
+  if(btn){ btn.disabled = true; btn.textContent = 'Publication...'; }
+  try{
+    await window.Leaderboard.submitScore({
+      id: state.onlineId,
+      name: (state.name || 'Joueur').slice(0,20),
+      club: (state.club.name || 'Club').slice(0,24),
+      clubColor: state.club.color,
+      clubEmblem: state.club.emblem,
+      level: state.level,
+      overall: overallRating(),
+      wins: state.totalWins||0,
+      score: computeScore(),
+      updatedAt: Date.now(),
+    });
+    toast('📡 Score publié !');
+    loadRankList();
+  }catch(e){
+    console.error('publishScore failed', e);
+    toast("❌ Échec de la publication, réessaie plus tard.");
+  }
+  const btn2 = document.getElementById('rank-publish');
+  if(btn2){ btn2.disabled = false; btn2.textContent = `📡 Publier mon score (${computeScore()} pts)`; }
+}
+
+async function loadRankList(){
+  const list = document.getElementById('rank-list');
+  if(!list) return;
+  try{
+    const top = await window.Leaderboard.fetchTop(50);
+    if(!list) return; // user may have navigated away while this was loading
+    if(!top.length){
+      list.innerHTML = '<div class="card" style="text-align:center; color:var(--chalk-dim); font-size:13px;">Personne n\'a encore publié de score. Sois le premier !</div>';
+      return;
+    }
+    list.innerHTML = top.map((p,i)=>`
+      <div class="legend-card" style="border-left:4px solid ${/^#[0-9a-fA-F]{3,8}$/.test(p.clubColor)?p.clubColor:'#F2A73B'}; ${p.id===state.onlineId?'box-shadow:0 0 0 2px var(--amber);':''}">
+        <div style="width:22px; text-align:center; font-family:'Anton',sans-serif; color:var(--chalk-dim); flex-shrink:0;">${i+1}</div>
+        <div class="legend-emoji" style="background:${/^#[0-9a-fA-F]{3,8}$/.test(p.clubColor)?p.clubColor:'#F2A73B'}; border-radius:9px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; font-size:18px;">${escapeHtml((p.clubEmblem||'🏀').slice(0,4))}</div>
+        <div class="legend-info">
+          <div class="lname">${escapeHtml(p.name)} ${p.id===state.onlineId?'(toi)':''}</div>
+          <div class="lmeta">${escapeHtml(p.club)} · Niv ${parseInt(p.level)||1} · OVR ${parseInt(p.overall)||0}</div>
+        </div>
+        <div style="margin-left:auto; text-align:right;">
+          <div class="mono" style="font-weight:700; color:var(--amber); font-size:14px;">${parseInt(p.score)||0}</div>
+          <div style="font-size:9px; color:var(--chalk-dim);">pts</div>
+        </div>
+      </div>
+    `).join('');
+  }catch(e){
+    console.error('loadRankList failed', e);
+    if(list) list.innerHTML = '<div class="card" style="text-align:center; color:var(--chalk-dim); font-size:13px;">Erreur de chargement du classement.</div>';
+  }
+}
+
+
+/* ============================= ONBOARDING ============================= */
+
+function renderOnboardPositions(){
+  const wrap = document.getElementById('ob-positions');
+  wrap.innerHTML='';
+  let selected = 'PG';
+  POSITIONS.forEach(p=>{
+    const el = document.createElement('div');
+    el.className = 'pos-opt'+(p.id===selected?' sel':'');
+    el.innerHTML = `<span class="pname">${p.emoji} ${p.id}</span>${p.name}`;
+    el.onclick = ()=>{
+      wrap.querySelectorAll('.pos-opt').forEach(x=>x.classList.remove('sel'));
+      el.classList.add('sel');
+      selected = p.id;
+    };
+    wrap.appendChild(el);
+  });
+  return ()=>selected;
+}
+
+function renderOnboardClub(){
+  const colorWrap = document.getElementById('ob-colors');
+  const emblemWrap = document.getElementById('ob-emblems');
+  colorWrap.innerHTML=''; emblemWrap.innerHTML='';
+  let selColor = CLUB_COLORS[0];
+  let selEmblem = CLUB_EMBLEMS[0];
+  const cpEmblem = document.getElementById('cp-emblem');
+  const cpName = document.getElementById('cp-name');
+  const nameInput = document.getElementById('ob-club-name');
+
+  function updatePreview(){
+    cpEmblem.style.background = selColor;
+    cpEmblem.textContent = selEmblem;
+    cpName.textContent = nameInput.value.trim() || 'Mon Club';
+  }
+
+  CLUB_COLORS.forEach(c=>{
+    const sw = document.createElement('div');
+    sw.className = 'color-swatch'+(c===selColor?' sel':'');
+    sw.style.background = c;
+    sw.onclick = ()=>{
+      colorWrap.querySelectorAll('.color-swatch').forEach(x=>x.classList.remove('sel'));
+      sw.classList.add('sel');
+      selColor = c;
+      updatePreview();
+    };
+    colorWrap.appendChild(sw);
+  });
+
+  CLUB_EMBLEMS.forEach(e=>{
+    const sw = document.createElement('div');
+    sw.className = 'emblem-swatch'+(e===selEmblem?' sel':'');
+    sw.textContent = e;
+    sw.onclick = ()=>{
+      emblemWrap.querySelectorAll('.emblem-swatch').forEach(x=>x.classList.remove('sel'));
+      sw.classList.add('sel');
+      selEmblem = e;
+      updatePreview();
+    };
+    emblemWrap.appendChild(sw);
+  });
+
+  nameInput.addEventListener('input', updatePreview);
+  updatePreview();
+
+  return ()=>({name: nameInput.value.trim() || 'Mon Club', color: selColor, emblem: selEmblem});
+}
+
+function initOnboarding(){
+  const getSelected = renderOnboardPositions();
+  const getClub = renderOnboardClub();
+  document.getElementById('ob-start').onclick = ()=>{
+    const name = document.getElementById('ob-name').value.trim() || 'Joueur Anonyme';
+    state.name = name;
+    state.posId = getSelected();
+    state.club = getClub();
+    state.created = true;
+    document.getElementById('onboard').style.display='none';
+    saveState();
+    switchScreen('home');
+    toast("Bienvenue sur l'asphalte, "+name+" !");
+  };
+}
+
+/* ============================= INIT ============================= */
+
+async function init(){
+  await loadState();
+  regenEnergy();
+  checkDailyReset();
+
+  document.querySelectorAll('.nav-btn').forEach(btn=>{
+    btn.onclick = ()=> switchScreen(btn.getAttribute('data-screen'));
+  });
+
+  if(state.created){
+    document.getElementById('onboard').style.display='none';
+  } else {
+    initOnboarding();
+  }
+
+  switchScreen('home');
+
+  // periodic energy tick refresh
+  setInterval(()=>{ regenEnergy(); renderScoreboard(); saveState(); }, 20000);
+}
+
+init();
+
+})();
+</script>
+
+<!--
+  ===========================================================================
+  CLASSEMENT MONDIAL — configuration Firebase (gratuit)
+  ===========================================================================
+  Pour activer le classement en ligne :
+  1. Va sur https://console.firebase.google.com et crée un projet gratuit.
+  2. Dans le projet, clique sur l'icône Web (</>) pour ajouter une "app web",
+     donne-lui un nom, puis copie l'objet firebaseConfig qu'on te donne.
+  3. Colle-le ci-dessous à la place de l'objet firebaseConfig actuel.
+  4. Dans le menu de gauche, va dans "Firestore Database" -> "Créer une base
+     de données" (mode production, région au choix).
+  5. Dans l'onglet "Règles" de Firestore, colle les règles fournies dans la
+     conversation avec Claude, puis publie.
+  Tant que firebaseConfig n'est pas rempli, le jeu affiche simplement un
+  message "classement pas encore activé" -- il ne plante jamais.
+  ===========================================================================
+-->
+<script type="module">
+  const firebaseConfig = {
+    apiKey: "AIzaSyBy5pznk6F0YffMG-9yBU3uXGDlIrD4204",
+    authDomain: "asphalte-basket-a44eb.firebaseapp.com",
+    projectId: "asphalte-basket-a44eb",
+    storageBucket: "asphalte-basket-a44eb.firebasestorage.app",
+    messagingSenderId: "533078807393",
+    appId: "1:533078807393:web:668046f3f4e131f5e8ab20"
+  };
+
+  window.LeaderboardStatus = 'loading';
+
+  const looksLikePlaceholder = Object.values(firebaseConfig).some(
+    v => typeof v === 'string' && v.startsWith('COLLE_')
+  );
+
+  if(looksLikePlaceholder){
+    window.LeaderboardStatus = 'not_configured';
+  } else {
+    (async () => {
+      try{
+        const { initializeApp } = await import('https://www.gstatic.com/firebasejs/12.17.0/firebase-app.js');
+        const { getFirestore, doc, setDoc, getDocs, collection, query, orderBy, limit } =
+          await import('https://www.gstatic.com/firebasejs/12.17.0/firebase-firestore.js');
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.Leaderboard = {
+          async submitScore(entry){
+            const ref = doc(db, 'leaderboard', entry.id);
+            await setDoc(ref, entry);
+          },
+          async fetchTop(n){
+            const q = query(collection(db, 'leaderboard'), orderBy('score', 'desc'), limit(n || 50));
+            const snap = await getDocs(q);
+            return snap.docs.map(d => d.data());
+          }
+        };
+        window.LeaderboardStatus = 'ready';
+      }catch(e){
+        console.error('Leaderboard init failed:', e);
+        window.LeaderboardStatus = 'error';
+      }
+    })();
+  }
+</script>
+</body>
+</html>
